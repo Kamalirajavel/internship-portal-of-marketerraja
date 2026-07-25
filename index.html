@@ -9,7 +9,7 @@
     body { font-family: 'Rajdhani', sans-serif; background: #000c24; color: #e8f4ff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
     .portal-box { background: rgba(2, 18, 51, 0.9); padding: 40px; border: 1px solid #00f5ff; border-radius: 8px; box-shadow: 0 0 30px rgba(0, 245, 255, 0.15); width: 100%; max-width: 400px; }
     h2 { font-family: 'Orbitron', monospace; color: #00f5ff; text-align: center; margin-bottom: 25px; letter-spacing: 2px; }
-    input { width: 100%; padding: 14px; margin-bottom: 15px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,245,255,0.3); color: #fff; border-radius: 4px; box-sizing: border-box; outline: none; font-family: 'Share Tech Mono', monospace; }
+    input { width: 100%; padding: 14px; margin-bottom: 15px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0,245,255,0.3); color: #fff; border-radius: 4px; box-sizing: border-box; outline: none; font-family: 'Share Tech Mono', monospace; font-size: 18px; text-align: center; letter-spacing: 4px; }
     input:focus { border-color: #00f5ff; }
     button { width: 100%; padding: 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: 'Orbitron', monospace; transition: 0.3s; margin-bottom: 10px; }
     .btn-primary { background: #25D366; color: #fff; box-shadow: 0 4px 15px rgba(37,211,102,0.3); }
@@ -26,14 +26,14 @@
     
     <!-- Step 1: Input Phone Number -->
     <div id="phone-step">
-      <input type="tel" id="user-phone" placeholder="Enter mobile number (e.g. 9514060906)" maxlength="10" required>
+      <input type="tel" id="user-phone" placeholder="Enter 10-digit mobile" maxlength="10" required>
       <button id="send-otp-btn" class="btn-primary">SEND OTP</button>
     </div>
 
     <!-- Step 2: Input OTP Code -->
     <div id="otp-step" style="display: none;">
       <p style="text-align: center; color: #00ff88; font-size: 14px; margin-bottom: 15px;">OTP sent successfully!</p>
-      <input type="text" id="otp-input" placeholder="Enter 4-digit OTP" maxlength="4" required>
+      <input type="text" id="otp-input" placeholder="----" maxlength="4" required>
       <button id="verify-otp-btn" class="btn-secondary">VERIFY OTP</button>
     </div>
 
@@ -42,7 +42,7 @@
 
   <script>
     const CUSTOMER_ID = "C-EFAF652FF33847B";
-    const AUTH_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDLUVGQUY2NTJGRjMzODQ3QiIsImlhdCI6MTc4NTAwMDUzNiwiZXhwIjoxOTQyNjgwNTM2fQ.-b51wgiDyhq8bHM_cjDGywpb-bViOlotOms3t8qKBmFahekB_H1js6a0IcFmrsnLrWsfOgilRf2w3fppqmA4JQ"; // Your exact token string
+    const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJDLUVGQUY2NTJGRjMzODQ3QiIsImlhdCI6MTc1MjExMDEzNn0.Vw...your_full_token_here"; // Keep your full active token string here
 
     let savedVerificationId = null;
     const statusMsg = document.getElementById('status-msg');
@@ -60,8 +60,7 @@
       statusMsg.innerText = "Sending OTP...";
 
       try {
-        // Corrected format mapping country explicitly into the request url parameters
-        const sendUrl = `https://cpaas.messagecentral.com/verification/v3/send?countryCode=91&flowType=SMS&mobileNumber=${phone}&customerId=${CUSTOMER_ID}&length=6`;
+        const sendUrl = `https://cpaas.messagecentral.com/verification/v3/send?countryCode=91&flowType=SMS&mobileNumber=${phone}&customerId=${CUSTOMER_ID}&length=4`;
         
         const response = await fetch(sendUrl, {
           method: 'POST',
@@ -80,7 +79,7 @@
           statusMsg.innerText = "";
         } else {
           statusMsg.style.color = "#ff0080";
-          statusMsg.innerText = result.message || "Failed to send OTP. Check credits.";
+          statusMsg.innerText = result.message || "Failed to send OTP.";
         }
       } catch (err) {
         console.error(err);
@@ -89,19 +88,19 @@
       }
     });
 
-    // 2. Validate OTP Request
+    // 2. Validate OTP Request against Message Central Server
     document.getElementById('verify-otp-btn').addEventListener('click', async () => {
       const code = document.getElementById('otp-input').value;
       const phone = document.getElementById('user-phone').value;
 
-      if (code.length !== 6) {
+      if (code.length !== 4) {
         statusMsg.style.color = "#ff0080";
         statusMsg.innerText = "Please enter the 4-digit code.";
         return;
       }
 
       statusMsg.style.color = "#00f5ff";
-      statusMsg.innerText = "Verifying code...";
+      statusMsg.innerText = "Verifying code with server...";
 
       try {
         const validateUrl = `https://cpaas.messagecentral.com/verification/v3/validateOtp?countryCode=91&mobileNumber=${phone}&verificationId=${savedVerificationId}&code=${code}`;
@@ -122,12 +121,12 @@
           statusMsg.innerText = "SUCCESS! Phone number verified.";
         } else {
           statusMsg.style.color = "#ff0080";
-          statusMsg.innerText = "Invalid OTP. Please try again.";
+          statusMsg.innerText = "Invalid OTP. Please check and try again.";
         }
       } catch (err) {
         console.error(err);
         statusMsg.style.color = "#ff0080";
-        statusMsg.innerText = "Verification network error.";
+        statusOpsMsg = "Verification network error.";
       }
     });
   </script>
