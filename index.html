@@ -41,26 +41,14 @@
   </div>
 
   <script>
-    // YOUR MESSAGE CENTRAL CREDENTIALS
     const CUSTOMER_ID = "C-EFAF652FF33847B";
-    const API_KEY = "PASTE_YOUR_AUTH_TOKEN_HERE"; // Replace with your exact token string from Message Central dashboard
-    const ACCOUNT_EMAIL = "kamali.rajavel.692006@gmail.com";
+    // Paste your exact Message Central Auth Token string here directly
+    const AUTH_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDLUVGQUY2NTJGRjMzODQ3QiIsImlhdCI6MTc4NTAwMDUzNiwiZXhwIjoxOTQyNjgwNTM2fQ.-b51wgiDyhq8bHM_cjDGywpb-bViOlotOms3t8qKBmFahekB_H1js6a0IcFmrsnLrWsfOgilRf2w3fppqmA4JQ"; 
 
     let savedVerificationId = null;
     const statusMsg = document.getElementById('status-msg');
 
-    // Helper: Get Auth Token safely bypassing CORS restrictions
-    async function getAuthToken() {
-      const targetUrl = `https://cpaas.messagecentral.com/auth/v1/authentication/token?customerId=${CUSTOMER_ID}&key=${API_KEY}&scope=NEW&country=91&email=${encodeURIComponent(ACCOUNT_EMAIL)}`;
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-      
-      const response = await fetch(proxyUrl);
-      const data = await response.json();
-      if (!data.token) throw new Error("Invalid token payload returned");
-      return data.token;
-    }
-
-    // 1. Send OTP Request
+    // 1. Send OTP Request (Direct Call)
     document.getElementById('send-otp-btn').addEventListener('click', async () => {
       const phone = document.getElementById('user-phone').value;
       if (phone.length !== 10) {
@@ -70,18 +58,17 @@
       }
 
       statusMsg.style.color = "#00f5ff";
-      statusMsg.innerText = "Generating security token & sending OTP...";
+      statusMsg.innerText = "Sending OTP...";
 
       try {
-        const token = await getAuthToken();
-        if (!token) throw new Error("Token generation failed");
-
-        const sendTarget = `https://cpaas.messagecentral.com/verification/v3/send?country=91&flowType=SMS&mobileNumber=${phone}&customerId=${CUSTOMER_ID}&otpLength=6`;
-        const sendProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(sendTarget)}`;
+        const sendUrl = `https://cpaas.messagecentral.com/verification/v3/send?country=91&flowType=SMS&mobileNumber=${phone}&customerId=${CUSTOMER_ID}&otpLength=6`;
         
-        const response = await fetch(sendProxy, {
+        const response = await fetch(sendUrl, {
           method: 'POST',
-          headers: { 'authToken': token, 'accept': '*/*' }
+          headers: { 
+            'authToken': AUTH_TOKEN,
+            'accept': '*/*' 
+          }
         });
         
         const result = await response.json();
@@ -93,12 +80,12 @@
           statusMsg.innerText = "";
         } else {
           statusMsg.style.color = "#ff0080";
-          statusMsg.innerText = result.message || "Error sending OTP. Check account balance/credits.";
+          statusMsg.innerText = result.message || "Failed to send OTP. Check token or credits.";
         }
       } catch (err) {
         console.error(err);
         statusMsg.style.color = "#ff0080";
-        statusMsg.innerText = "Connection error. Check console logs.";
+        statusMsg.innerText = "Network request failed. Browser blocked direct call.";
       }
     });
 
@@ -117,13 +104,14 @@
       statusMsg.innerText = "Verifying code...";
 
       try {
-        const token = await getAuthToken();
-        const validateTarget = `https://cpaas.messagecentral.com/verification/v3/validateOtp?country=91&mobileNumber=${phone}&verificationId=${savedVerificationId}&code=${code}`;
-        const validateProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(validateTarget)}`;
+        const validateUrl = `https://cpaas.messagecentral.com/verification/v3/validateOtp?country=91&mobileNumber=${phone}&verificationId=${savedVerificationId}&code=${code}`;
         
-        const response = await fetch(validateProxy, {
+        const response = await fetch(validateUrl, {
           method: 'GET',
-          headers: { 'authToken': token, 'accept': '*/*' }
+          headers: { 
+            'authToken': AUTH_TOKEN,
+            'accept': '*/*' 
+          }
         });
         
         const result = await response.json();
@@ -139,7 +127,7 @@
       } catch (err) {
         console.error(err);
         statusMsg.style.color = "#ff0080";
-        statusMsg.innerText = "Verification failed due to a network error.";
+        statusMsg.innerText = "Verification network error.";
       }
     });
   </script>
