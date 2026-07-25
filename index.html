@@ -43,21 +43,10 @@
   <script>
     // YOUR MESSAGE CENTRAL CREDENTIALS
     const CUSTOMER_ID = "C-EFAF652FF33847B";
-    const API_KEY = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDLUVGQUY2NTJGRjMzODQ3QiIsImlhdCI6MTc4NTAwMDUzNiwiZXhwIjoxOTQyNjgwNTM2fQ.-b51wgiDyhq8bHM_cjDGywpb-bViOlotOms3t8qKBmFahekB_H1js6a0IcFmrsnLrWsfOgilRf2w3fppqmA4JQ";
-    const ACCOUNT_EMAIL = "kamali.rajavel.692006@gmail.com"; // Your login email seen in your screenshots
+    const API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJDLUVGQUY2NTJGRjMzODQ3QiIsImlhdCI6MTc1MjExMDEzNn0.Vw...your_full_token_here"; 
 
-
-    
     let savedVerificationId = null;
     const statusMsg = document.getElementById('status-msg');
-
-    // Helper: Get Auth Token from Message Central
-    async function getAuthToken() {
-      const url = `https://cpaas.messagecentral.com/auth/v1/authentication/token?customerId=${CUSTOMER_ID}&key=${API_KEY}&scope=NEW&country=91&email=${encodeURIComponent(ACCOUNT_EMAIL)}`;
-      const response = await fetch(url, { method: 'GET', headers: { 'accept': '*/*' } });
-      const data = await response.json();
-      return data.token;
-    }
 
     // 1. Send OTP Request
     document.getElementById('send-otp-btn').addEventListener('click', async () => {
@@ -69,30 +58,30 @@
       }
 
       statusMsg.style.color = "#00f5ff";
-      statusMsg.innerText = "Generating token & sending OTP...";
+      statusMsg.innerText = "Sending OTP through Message Central...";
 
       try {
-        const token = await getAuthToken();
-        if (!token) throw new Error("Token generation failed");
-
-        // Send OTP via Message Central VerifyNow API
+        // Direct Send API using the Auth Token in headers
         const sendUrl = `https://cpaas.messagecentral.com/verification/v3/send?country=91&flowType=SMS&mobileNumber=${phone}&customerId=${CUSTOMER_ID}&otpLength=6`;
         
         const response = await fetch(sendUrl, {
           method: 'POST',
-          headers: { 'authToken': token }
+          headers: { 
+            'authToken': API_KEY,
+            'accept': '*/*'
+          }
         });
         
         const result = await response.json();
 
-        if (result.responseCode === 200) {
-          savedVerificationId = result.data.verificationId; // Needed to validate later
+        if (result.responseCode === 200 || result.status === "SUCCESS") {
+          savedVerificationId = result.data.verificationId;
           document.getElementById('phone-step').style.display = 'none';
           document.getElementById('otp-step').style.display = 'block';
           statusMsg.innerText = "";
         } else {
           statusMsg.style.color = "#ff0080";
-          statusMsg.innerText = "Error sending OTP. Try again.";
+          statusMsg.innerText = result.message || "Error sending OTP. Check credits.";
         }
       } catch (err) {
         console.error(err);
@@ -116,14 +105,14 @@
       statusMsg.innerText = "Verifying code...";
 
       try {
-        const token = await getAuthToken();
-        
-        // Validate OTP via Message Central API
         const validateUrl = `https://cpaas.messagecentral.com/verification/v3/validateOtp?country=91&mobileNumber=${phone}&verificationId=${savedVerificationId}&code=${code}`;
         
         const response = await fetch(validateUrl, {
           method: 'GET',
-          headers: { 'authToken': token }
+          headers: { 
+            'authToken': API_KEY,
+            'accept': '*/*'
+          }
         });
         
         const result = await response.json();
