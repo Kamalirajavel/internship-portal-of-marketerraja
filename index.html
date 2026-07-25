@@ -43,10 +43,22 @@
   <script>
     // YOUR MESSAGE CENTRAL CREDENTIALS
     const CUSTOMER_ID = "C-EFAF652FF33847B";
-    const API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJDLUVGQUY2NTJGRjMzODQ3QiIsImlhdCI6MTc1MjExMDEzNn0.Vw...your_full_token_here"; 
+    const API_KEY = "PASTE_YOUR_AUTH_TOKEN_HERE"; // Replace with your exact token string from Message Central dashboard
+    const ACCOUNT_EMAIL = "kamali.rajavel.692006@gmail.com";
 
     let savedVerificationId = null;
     const statusMsg = document.getElementById('status-msg');
+
+    // Helper: Get Auth Token safely bypassing CORS restrictions
+    async function getAuthToken() {
+      const targetUrl = `https://cpaas.messagecentral.com/auth/v1/authentication/token?customerId=${CUSTOMER_ID}&key=${API_KEY}&scope=NEW&country=91&email=${encodeURIComponent(ACCOUNT_EMAIL)}`;
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+      
+      const response = await fetch(proxyUrl);
+      const data = await response.json();
+      if (!data.token) throw new Error("Invalid token payload returned");
+      return data.token;
+    }
 
     // 1. Send OTP Request
     document.getElementById('send-otp-btn').addEventListener('click', async () => {
@@ -58,18 +70,18 @@
       }
 
       statusMsg.style.color = "#00f5ff";
-      statusMsg.innerText = "Sending OTP through Message Central...";
+      statusMsg.innerText = "Generating security token & sending OTP...";
 
       try {
-        // Direct Send API using the Auth Token in headers
-        const sendUrl = `https://cpaas.messagecentral.com/verification/v3/send?country=91&flowType=SMS&mobileNumber=${phone}&customerId=${CUSTOMER_ID}&otpLength=6`;
+        const token = await getAuthToken();
+        if (!token) throw new Error("Token generation failed");
+
+        const sendTarget = `https://cpaas.messagecentral.com/verification/v3/send?country=91&flowType=SMS&mobileNumber=${phone}&customerId=${CUSTOMER_ID}&otpLength=6`;
+        const sendProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(sendTarget)}`;
         
-        const response = await fetch(sendUrl, {
+        const response = await fetch(sendProxy, {
           method: 'POST',
-          headers: { 
-            'authToken': API_KEY,
-            'accept': '*/*'
-          }
+          headers: { 'authToken': token, 'accept': '*/*' }
         });
         
         const result = await response.json();
@@ -81,7 +93,7 @@
           statusMsg.innerText = "";
         } else {
           statusMsg.style.color = "#ff0080";
-          statusMsg.innerText = result.message || "Error sending OTP. Check credits.";
+          statusMsg.innerText = result.message || "Error sending OTP. Check account balance/credits.";
         }
       } catch (err) {
         console.error(err);
@@ -105,14 +117,13 @@
       statusMsg.innerText = "Verifying code...";
 
       try {
-        const validateUrl = `https://cpaas.messagecentral.com/verification/v3/validateOtp?country=91&mobileNumber=${phone}&verificationId=${savedVerificationId}&code=${code}`;
+        const token = await getAuthToken();
+        const validateTarget = `https://cpaas.messagecentral.com/verification/v3/validateOtp?country=91&mobileNumber=${phone}&verificationId=${savedVerificationId}&code=${code}`;
+        const validateProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(validateTarget)}`;
         
-        const response = await fetch(validateUrl, {
+        const response = await fetch(validateProxy, {
           method: 'GET',
-          headers: { 
-            'authToken': API_KEY,
-            'accept': '*/*'
-          }
+          headers: { 'authToken': token, 'accept': '*/*' }
         });
         
         const result = await response.json();
