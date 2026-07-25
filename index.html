@@ -53,7 +53,7 @@
 
     // Helper: Get Auth Token from Message Central
     async function getAuthToken() {
-      const url = `https://cpaas.messagecentral.com/auth/v1/authentication/token?customerId=${C-EFAF652FF33847B}&key=${eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDLUVGQUY2NTJGRjMzODQ3QiIsImlhdCI6MTc4NTAwMDUzNiwiZXhwIjoxOTQyNjgwNTM2fQ.-b51wgiDyhq8bHM_cjDGywpb-bViOlotOms3t8qKBmFahekB_H1js6a0IcFmrsnLrWsfOgilRf2w3fppqmA4JQ}&scope=NEW&country=91`;
+      const url = `https://cpaas.messagecentral.com/auth/v1/authentication/token?customerId=${CUSTOMER_ID}&key=${API_KEY}&scope=NEW&country=91&email=${encodeURIComponent(ACCOUNT_EMAIL)}`;
       const response = await fetch(url, { method: 'GET', headers: { 'accept': '*/*' } });
       const data = await response.json();
       return data.token;
